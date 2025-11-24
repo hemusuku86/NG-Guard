@@ -40,5 +40,25 @@ def solveChallenge(bits, payload, signature):
             }
         l += 1
 
+# example
+
 if __name__ == "__main__":
-    print(solveChallenge(16, "MTc2Mzk2MzEzNzYyMXxlYTNhNmI5ZA", "DAaw3r2BKyHS2R5sYB9DJFnFnYoG-cExJQuKIm8bjMo"))
+    import requests
+    s = requests.Session()
+    s.headers.update({"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"})
+    r = s.get("https://newgrounds.com/")
+    if r.status_code == 200:
+        print("NG Guard didn't detected.")
+        print(f"scraped :\n{r.text[:200]}...")
+    elif r.status_code == 403:
+        r = s.get("https://newgrounds.com/_guard/api/v1/challenge")
+        captcha_result = solveChallenge(r.json()["bits"], r.json()["payload"], r.json()["sig"])
+        r = s.post("https://newgrounds.com/_guard/api/v1/verify", json=captcha_result)
+        if r.json()["ok"] == True:
+            r = s.get("https://newgrounds.com/")
+            print("Successfully solved captcha.")
+            print(f"scraped :\n{r.text[:200]}...")
+        else:
+            print("Failed to solve captcha.")
+    else:
+        print("Failed with unknown error.")
